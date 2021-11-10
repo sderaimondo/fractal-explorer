@@ -1,6 +1,6 @@
 use crate::{
-    color_scheme::{ColorScheme, Grayscale},
-    fractal::{Checkerboard, Fractal},
+    color_scheme::{grayscale::Grayscale, ColorScheme},
+    fractal::{checkerboard::Checkerboard, Fractal},
     render::render_fractal,
 };
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
