@@ -1,4 +1,5 @@
 use crate::{
+    color_scheme::{ColorScheme, Grayscale},
     fractal::{Checkerboard, Fractal},
     render::render_fractal,
 };
@@ -6,6 +7,7 @@ use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
 
 pub struct App {
     fractal: Box<dyn Fractal>,
+    color_scheme: Box<dyn ColorScheme>,
     center: (f32, f32),
     zoom: f32,
 }
@@ -21,12 +23,20 @@ impl App {
     }
 
     pub fn draw(&mut self, onto: &mut [u32], size: (usize, usize)) {
-        render_fractal(&*self.fractal, onto, size, self.center, self.zoom);
+        render_fractal(
+            &*self.fractal,
+            &*self.color_scheme,
+            onto,
+            size,
+            self.center,
+            self.zoom,
+        );
     }
 
     pub fn new() -> Self {
         Self {
             fractal: Box::new(Checkerboard),
+            color_scheme: Box::new(Grayscale),
             center: (0.0, 0.0),
             zoom: 100.0,
         }
