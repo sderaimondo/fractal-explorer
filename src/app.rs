@@ -1,6 +1,6 @@
 use crate::{
-    color_scheme::{grayscale::Grayscale, ColorScheme},
-    fractal::{checkerboard::Checkerboard, Fractal},
+    color_scheme::{grayscale::Grayscale, rainbow::Rainbow, ColorScheme},
+    fractal::{checkerboard::Checkerboard, mandelbrot::Mandelbrot, Fractal},
     render::render_fractal,
 };
 use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
@@ -35,8 +35,8 @@ impl App {
 
     pub fn new() -> Self {
         Self {
-            color_scheme: Box::new(Grayscale),
-            fractal: Box::new(Checkerboard),
+            color_scheme: Box::new(Rainbow),
+            fractal: Box::new(Mandelbrot),
             center: (0.0, 0.0),
             zoom: 100.0,
         }
