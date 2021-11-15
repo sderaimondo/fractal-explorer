@@ -35,8 +35,8 @@ impl App {
 
     pub fn new() -> Self {
         Self {
-            fractal: Box::new(Checkerboard),
             color_scheme: Box::new(Grayscale),
+            fractal: Box::new(Checkerboard),
             center: (0.0, 0.0),
             zoom: 100.0,
         }
@@ -52,12 +52,19 @@ impl App {
             Window::new("Fractal Explorer", WIDTH, HEIGHT, WindowOptions::default()).unwrap();
         let mut last_mouse_pos = None;
 
+        self.draw(&mut buffer, SIZE);
+        window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+
         while window.is_open() && !window.is_key_down(Key::Escape) {
             if window.get_mouse_down(MouseButton::Left) {
                 let new_mouse_pos = window.get_mouse_pos(MouseMode::Pass);
                 if let (Some((x1, y1)), Some((x2, y2))) = (last_mouse_pos, new_mouse_pos) {
                     let (dx, dy) = (x2 - x1, y2 - y1);
                     self.on_left_click_drag((dx, dy));
+                    self.draw(&mut buffer, SIZE);
+                    window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+                    last_mouse_pos = new_mouse_pos;
+                    continue;
                 }
                 last_mouse_pos = new_mouse_pos;
             } else {
@@ -66,11 +73,11 @@ impl App {
 
             if let Some((_, dy)) = window.get_scroll_wheel() {
                 self.on_scroll(dy);
+                self.draw(&mut buffer, SIZE);
+                window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+                continue;
             }
-
-            self.draw(&mut buffer, SIZE);
-
-            window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+            window.update();
         }
     }
 }
