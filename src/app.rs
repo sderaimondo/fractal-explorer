@@ -3,43 +3,62 @@ use crate::{
     fractal::{checkerboard::Checkerboard, mandelbrot::Mandelbrot, Fractal},
     render::render_fractal,
 };
-use minifb::{Key, MouseButton, MouseMode, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
+use std::collections::vec_deque::VecDeque;
 
 pub struct App {
-    fractal: Box<dyn Fractal>,
-    color_scheme: Box<dyn ColorScheme>,
+    color_schemes: VecDeque<Box<dyn ColorScheme>>,
+    fractals: VecDeque<Box<dyn Fractal>>,
     center: (f32, f32),
     zoom: f32,
+    redraw: bool,
 }
 
 impl App {
     pub fn on_left_click_drag(&mut self, delta: (f32, f32)) {
         self.center.0 -= delta.0 / self.zoom;
         self.center.1 -= delta.1 / self.zoom;
+        self.redraw = true;
     }
 
     pub fn on_scroll(&mut self, delta_y: f32) {
         self.zoom *= 1.2f32.powf(delta_y);
+        self.redraw = true;
     }
 
+    //pub fn rotate<T>(&mut self, mut ring: &VecDeque<T>) {
+    //    ring.shift_left(1);
+    //    self.redraw = true;
+    //}
+
     pub fn draw(&mut self, onto: &mut [u32], size: (usize, usize)) {
-        render_fractal(
-            &*self.fractal,
-            &*self.color_scheme,
-            onto,
-            size,
-            self.center,
-            self.zoom,
-        );
+        let color_scheme = self.color_schemes.front();
+        let fractal = self.fractals.front();
+        if let (Some(cs), Some(f)) = (color_scheme, fractal) {
+            render_fractal(
+                &**f,
+                &**cs,
+                onto,
+                size,
+                self.center,
+                self.zoom,
+            );
+        }
     }
 
     pub fn new() -> Self {
-        Self {
-            color_scheme: Box::new(Rainbow),
-            fractal: Box::new(Mandelbrot),
+        let mut app = Self {
+            color_schemes: VecDeque::new(),
+            fractals: VecDeque::new(),
             center: (0.0, 0.0),
             zoom: 100.0,
-        }
+            redraw: true,
+        };
+        app.color_schemes.push_back(Box::new(Rainbow));
+        app.color_schemes.push_back(Box::new(Grayscale));
+        app.fractals.push_back(Box::new(Mandelbrot));
+        app.fractals.push_back(Box::new(Checkerboard));
+        app
     }
 
     pub fn run(mut self) {
@@ -61,23 +80,29 @@ impl App {
                 if let (Some((x1, y1)), Some((x2, y2))) = (last_mouse_pos, new_mouse_pos) {
                     let (dx, dy) = (x2 - x1, y2 - y1);
                     self.on_left_click_drag((dx, dy));
-                    self.draw(&mut buffer, SIZE);
-                    window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
-                    last_mouse_pos = new_mouse_pos;
-                    continue;
                 }
                 last_mouse_pos = new_mouse_pos;
             } else {
                 last_mouse_pos = None;
             }
-
+            if window.is_key_pressed(Key::Space, KeyRepeat::No) {
+                self.color_schemes.rotate_left(1);
+                self.redraw = true;
+            }
+            if window.is_key_pressed(Key::Tab, KeyRepeat::No) {
+                self.fractals.rotate_left(1);
+                self.redraw = true;
+            }
             if let Some((_, dy)) = window.get_scroll_wheel() {
                 self.on_scroll(dy);
+            }
+            if self.redraw {
+                self.redraw = false;
                 self.draw(&mut buffer, SIZE);
                 window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
-                continue;
+            } else {
+                window.update();
             }
-            window.update();
         }
     }
 }
