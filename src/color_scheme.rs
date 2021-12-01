@@ -1,5 +1,7 @@
 pub mod grayscale;
+pub mod rainbow;
 
 pub trait ColorScheme {
-    fn get_color(&self, intensity: f32) -> u32;
+    // intensity [0..63]
+    fn get_color(&self, intensity: u32) -> u32;
 }
